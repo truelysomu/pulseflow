@@ -575,6 +575,122 @@
   </main>
 </div>
 
+<!-- ===================== ADMIN SECTION ===================== -->
+<div id="admin-section" class="hidden">
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <h2>🛡️ PulseFlow</h2>
+      <span>Admin Panel</span>
+    </div>
+    <div class="sidebar-nav">
+      <div class="admin-nav-item nav-item active" onclick="showAdminPage('admin-dashboard-page')" data-admin-page="admin-dashboard-page">
+        <span class="nav-icon">🏠</span> Dashboard
+      </div>
+      <div class="admin-nav-item nav-item" onclick="showAdminPage('admin-users-page')" data-admin-page="admin-users-page">
+        <span class="nav-icon">👥</span> Users
+      </div>
+      <div class="admin-nav-item nav-item" onclick="showAdminPage('admin-trends-page')" data-admin-page="admin-trends-page">
+        <span class="nav-icon">📈</span> Trends
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar">🛡️</div>
+        <div class="sidebar-user-info">
+          <div style="font-weight:600;font-size:0.85rem">Admin</div>
+          <div id="admin-topbar-email" style="font-size:0.72rem;color:var(--text-muted);word-break:break-all"></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="topbar">
+      <div class="topbar-left" id="admin-topbar-title">🛡️ Dashboard</div>
+      <div class="topbar-right">
+        <button class="btn btn-secondary btn-sm" onclick="logoutUser()">Sign Out</button>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN DASHBOARD PAGE ===== -->
+    <div id="admin-dashboard-page" class="admin-page active">
+      <div class="page-header">
+        <h2>🛡️ Admin Dashboard</h2>
+        <p>Overview of all PulseFlow users and activity.</p>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="admin-stat-users">0</div><div class="stat-label">Total Users</div></div>
+        <div class="stat-card"><div class="stat-icon">🆕</div><div class="stat-value" id="admin-stat-new">0</div><div class="stat-label">New (7 days)</div></div>
+        <div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-value" id="admin-stat-active">0</div><div class="stat-label">Active Today</div></div>
+        <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-value" id="admin-stat-burnout">0</div><div class="stat-label">High Burnout Risk</div></div>
+        <div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-value" id="admin-stat-focus">0h</div><div class="stat-label">Total Focus Today</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔔 Alerts & Notifications</div>
+        <div id="admin-notifications"><p style="color:var(--text-muted);font-size:0.88rem">Loading...</p></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">👥 Recently Joined Users</div>
+        <div id="admin-recent-users"><p style="color:var(--text-muted);font-size:0.88rem">Loading...</p></div>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN USERS PAGE ===== -->
+    <div id="admin-users-page" class="admin-page">
+      <div class="page-header">
+        <h2>👥 Registered Users</h2>
+        <p>All users who have signed up on PulseFlow.</p>
+      </div>
+      <div class="card">
+        <div style="margin-bottom:14px">
+          <input type="text" id="admin-search-input" placeholder="🔍 Search by name, email, domain or role..." oninput="adminSearch()"
+            style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.9rem;outline:none;background:var(--bg)" />
+        </div>
+        <div style="overflow-x:auto">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Email</th><th>Domain</th><th>Role</th>
+                <th>Joined</th><th>Focus Today</th><th>Sessions</th>
+                <th>Tasks Done</th><th>Reflections</th><th>Burnout</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="admin-user-tbody">
+              <tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:20px">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN TRENDS PAGE ===== -->
+    <div id="admin-trends-page" class="admin-page">
+      <div class="page-header">
+        <h2>📈 Registration Trends</h2>
+        <p>Signups, activity, and domain breakdown over time.</p>
+      </div>
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-title">🆕 New Signups (14 days)</div>
+          <div class="chart-container"><canvas id="chart-admin-signups"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🟢 Daily Active Users (14 days)</div>
+          <div class="chart-container"><canvas id="chart-admin-active"></canvas></div>
+        </div>
+        <div class="card full-width">
+          <div class="card-title">🏷️ Users by Domain</div>
+          <div class="chart-container"><canvas id="chart-admin-domains"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
 <!-- ===== USER DETAIL MODAL ===== -->
 <div id="user-detail-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeUserDetail()">
   <div class="modal" style="max-width:640px;width:95%;max-height:85vh;overflow-y:auto">

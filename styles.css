@@ -1023,3 +1023,26 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+/* ===== ADMIN SECTION ===== */
+#admin-section {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-page { display: none; }
+.admin-page.active { display: block; }
+
+.admin-notif {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border-left: 4px solid var(--border);
+  background: var(--bg);
+}
+
+.admin-notif.danger { border-left-color: var(--danger); background: #fef2f2; color: #dc2626; }
+.admin-notif.warning { border-left-color: var(--warning); background: #fffbeb; color: #d97706; }
+.admin-notif.success { border-left-color: var(--success); background: #f0fdf4; color: #16a34a; }

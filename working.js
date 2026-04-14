@@ -49,6 +49,12 @@ let lastEnergyLevel = null;
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
+    // Admin bypasses onboarding and user app entirely
+    if (user.email === ADMIN_EMAIL) {
+      showSection("admin-section");
+      initAdminApp();
+      return;
+    }
     const profile = await loadUserProfile(user.uid);
     if (!profile) {
       showSection("onboarding-section");
@@ -66,7 +72,7 @@ onAuthStateChanged(auth, async (user) => {
 
 // ===== SECTION / VIEW HELPERS =====
 function showSection(id) {
-  ["auth-section", "onboarding-section", "app-section"].forEach(s => {
+  ["auth-section", "onboarding-section", "app-section", "admin-section"].forEach(s => {
     const el = document.getElementById(s);
     if (el) el.classList.toggle("hidden", s !== id);
   });
@@ -179,8 +185,56 @@ window.loginAdmin = async function() {
   }
 };
 
+// ===== ADMIN APP INIT =====
+async function initAdminApp() {
+  const adminEmail = document.getElementById("admin-topbar-email");
+  if (adminEmail) adminEmail.textContent = currentUser.email;
+  showAdminPage("admin-dashboard-page");
+  await loadAdminPanel();
+  renderRecentUsers();
+}
+
+function renderRecentUsers() {
+  const container = document.getElementById("admin-recent-users");
+  if (!container) return;
+  const recent = adminAllUsers
+    .filter(u => u.createdAt)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 5);
+  if (!recent.length) { container.innerHTML = `<p style="color:var(--text-muted);font-size:0.88rem">No users yet.</p>`; return; }
+  container.innerHTML = recent.map(u => `
+    <div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1rem;flex-shrink:0">
+        ${escHtml((u.name || "?")[0].toUpperCase())}
+      </div>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:0.9rem">${escHtml(u.name || "–")}</div>
+        <div style="font-size:0.78rem;color:var(--text-muted)">${escHtml(u.email || "–")} · ${escHtml(u.domain || "–")} · ${escHtml(u.role || "–")}</div>
+      </div>
+      <div style="font-size:0.75rem;color:var(--text-muted)">${u.createdAt ? u.createdAt.split("T")[0] : "–"}</div>
+      <button class="btn btn-sm btn-secondary" onclick="openUserDetail('${u.uid}')">View</button>
+    </div>`).join("");
+}
+
+window.showAdminPage = function(pageId) {
+  document.querySelectorAll(".admin-page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".admin-nav-item").forEach(n => n.classList.remove("active"));
+  const page = document.getElementById(pageId);
+  if (page) page.classList.add("active");
+  const nav = document.querySelector(`[data-admin-page="${pageId}"]`);
+  if (nav) nav.classList.add("active");
+  const titles = {
+    "admin-dashboard-page": "🛡️ Dashboard",
+    "admin-users-page": "👥 Registered Users",
+    "admin-trends-page": "📈 Registration Trends"
+  };
+  const titleEl = document.getElementById("admin-topbar-title");
+  if (titleEl) titleEl.textContent = titles[pageId] || "Admin";
+  if (pageId === "admin-trends-page") setTimeout(renderAdminCharts, 150);
+};
+
 // ===== ADMIN PANEL =====
-let adminAllUsers = []; // cache for search
+let adminAllUsers = [];
 
 async function loadAdminPanel() {
   const tbody = document.getElementById("admin-user-tbody");
@@ -189,13 +243,13 @@ async function loadAdminPanel() {
     const usersSnap = await get(ref(db, "users"));
     if (!usersSnap.exists()) {
       if (tbody) tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:20px">No users found.</td></tr>`;
+      updateAdminDashStats([], []);
       return;
     }
     const today = todayStr();
     adminAllUsers = [];
     usersSnap.forEach(child => adminAllUsers.push({ uid: child.key, ...child.val() }));
 
-    // fetch all data in parallel
     const userData = await Promise.all(adminAllUsers.map(async u => {
       const [sessions, logs, tasks, reflections] = await Promise.all([
         dbGetAll(`sessions/${u.uid}`),
@@ -208,43 +262,99 @@ async function loadAdminPanel() {
     adminAllUsers = userData;
 
     renderAdminTable(adminAllUsers, today);
+    updateAdminDashStats(adminAllUsers, today);
+    renderAdminNotifications(adminAllUsers, today);
+    renderRecentUsers();
   } catch (e) {
     console.error("Admin panel error:", e);
   }
 }
 
+function updateAdminDashStats(users, today) {
+  today = today || todayStr();
+  let activeToday = 0, highRisk = 0, totalFocus = 0;
+  users.forEach(u => {
+    const { sessions = [], logs = [] } = u;
+    const ts = sessions.filter(s => s.date === today);
+    const focusH = ts.reduce((s, x) => s + (x.duration || 0), 0) / 3600;
+    totalFocus += focusH;
+    if (ts.length > 0 || logs.filter(l => l.date === today).length > 0) activeToday++;
+    const todayLogs = logs.filter(l => l.date === today);
+    const lowRatio = todayLogs.length > 0 ? todayLogs.filter(l => l.energyLevel === "Low").length / todayLogs.length : 0;
+    let score = 0;
+    if (focusH > 8) score += 3; else if (focusH > 6) score += 2; else if (focusH > 4) score += 1;
+    if (lowRatio > 0.6) score += 2;
+    if (ts.length > 6) score += 1;
+    if (score > 3) highRisk++;
+  });
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set("admin-stat-users", users.length);
+  set("admin-stat-active", activeToday);
+  set("admin-stat-burnout", highRisk);
+  set("admin-stat-focus", totalFocus.toFixed(1) + "h");
+
+  // Recent signups (last 7 days)
+  const recent = users.filter(u => {
+    if (!u.createdAt) return false;
+    const d = new Date(u.createdAt);
+    const diff = (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24);
+    return diff <= 7;
+  });
+  set("admin-stat-new", recent.length);
+}
+
+function renderAdminNotifications(users, today) {
+  const container = document.getElementById("admin-notifications");
+  if (!container) return;
+  const notes = [];
+
+  users.forEach(u => {
+    const { sessions = [], logs = [] } = u;
+    const ts = sessions.filter(s => s.date === today);
+    const focusH = ts.reduce((s, x) => s + (x.duration || 0), 0) / 3600;
+    const todayLogs = logs.filter(l => l.date === today);
+    const lowRatio = todayLogs.length > 0 ? todayLogs.filter(l => l.energyLevel === "Low").length / todayLogs.length : 0;
+    let score = 0;
+    if (focusH > 8) score += 3; else if (focusH > 6) score += 2; else if (focusH > 4) score += 1;
+    if (lowRatio > 0.6) score += 2;
+    if (ts.length > 6) score += 1;
+    if (score > 3) notes.push({ type: "danger", msg: `🔴 ${escHtml(u.name || u.email)} is at high burnout risk today.` });
+    else if (score > 1) notes.push({ type: "warning", msg: `🟡 ${escHtml(u.name || u.email)} shows warning signs of burnout.` });
+
+    // New signup in last 24h
+    if (u.createdAt) {
+      const diff = (Date.now() - new Date(u.createdAt).getTime()) / (1000 * 60 * 60);
+      if (diff <= 24) notes.push({ type: "success", msg: `🆕 ${escHtml(u.name || u.email)} just joined PulseFlow.` });
+    }
+  });
+
+  if (notes.length === 0) {
+    container.innerHTML = `<p style="color:var(--text-muted);font-size:0.88rem">No alerts right now. All users look good.</p>`;
+    return;
+  }
+  container.innerHTML = notes.map(n => `
+    <div class="admin-notif ${n.type}">${n.msg}</div>
+  `).join("");
+}
+
 function renderAdminTable(users, today) {
   today = today || todayStr();
-  let totalFocusToday = 0, activeToday = 0, highRiskCount = 0;
   const rows = [];
-
   for (const u of users) {
     const { sessions = [], logs = [], tasks = [], reflections = [] } = u;
-
     const todaySessions = sessions.filter(s => s.date === today);
-    const focusSecs = todaySessions.reduce((s, x) => s + (x.duration || 0), 0);
-    const focusH = +(focusSecs / 3600).toFixed(1);
-    totalFocusToday += focusH;
-
+    const focusH = +(todaySessions.reduce((s, x) => s + (x.duration || 0), 0) / 3600).toFixed(1);
     const totalFocusAllTime = +(sessions.reduce((s, x) => s + (x.duration || 0), 0) / 3600).toFixed(1);
-
     const todayLogs = logs.filter(l => l.date === today);
-    const todayTasks = tasks.filter(t => t.date === today);
-    const doneTasks = todayTasks.filter(t => t.completed).length;
+    const doneTasks = tasks.filter(t => t.date === today && t.completed).length;
     const totalDoneTasks = tasks.filter(t => t.completed).length;
-
-    if (todaySessions.length > 0 || todayLogs.length > 0) activeToday++;
-
     const lowRatio = todayLogs.length > 0 ? todayLogs.filter(l => l.energyLevel === "Low").length / todayLogs.length : 0;
     let score = 0;
     if (focusH > 8) score += 3; else if (focusH > 6) score += 2; else if (focusH > 4) score += 1;
     if (lowRatio > 0.6) score += 2;
     if (todaySessions.length > 6) score += 1;
     const burnoutState = score <= 1 ? "healthy" : score <= 3 ? "warning" : "high-risk";
-    if (burnoutState === "high-risk") highRiskCount++;
-
     const joined = u.createdAt ? u.createdAt.split("T")[0] : "–";
-
     rows.push(`<tr style="cursor:pointer" onclick="openUserDetail('${u.uid}')">
       <td><strong>${escHtml(u.name || "–")}</strong></td>
       <td style="font-size:0.8rem">${escHtml(u.email || "–")}</td>
@@ -259,28 +369,55 @@ function renderAdminTable(users, today) {
       <td><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openUserDetail('${u.uid}')">View</button></td>
     </tr>`);
   }
-
-  document.getElementById("admin-stat-users").textContent = adminAllUsers.length;
-  document.getElementById("admin-stat-active").textContent = activeToday;
-  document.getElementById("admin-stat-burnout").textContent = highRiskCount;
-  document.getElementById("admin-stat-focus").textContent = totalFocusToday.toFixed(1) + "h";
   const tbody = document.getElementById("admin-user-tbody");
   if (tbody) tbody.innerHTML = rows.join("") || `<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:20px">No users found.</td></tr>`;
 }
 
-// ===== ADMIN SEARCH =====
 window.adminSearch = function() {
   const q = (document.getElementById("admin-search-input").value || "").toLowerCase();
-  const filtered = q
-    ? adminAllUsers.filter(u =>
-        (u.name || "").toLowerCase().includes(q) ||
-        (u.email || "").toLowerCase().includes(q) ||
-        (u.domain || "").toLowerCase().includes(q) ||
-        (u.role || "").toLowerCase().includes(q)
-      )
-    : adminAllUsers;
+  const filtered = q ? adminAllUsers.filter(u =>
+    (u.name || "").toLowerCase().includes(q) ||
+    (u.email || "").toLowerCase().includes(q) ||
+    (u.domain || "").toLowerCase().includes(q) ||
+    (u.role || "").toLowerCase().includes(q)
+  ) : adminAllUsers;
   renderAdminTable(filtered);
 };
+
+// ===== ADMIN CHARTS =====
+function renderAdminCharts() {
+  if (!adminAllUsers.length) return;
+  // Signups per day (last 14 days)
+  const labels = [], signupData = [], activeData = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split("T")[0];
+    labels.push(d.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
+    signupData.push(adminAllUsers.filter(u => u.createdAt && u.createdAt.startsWith(dateStr)).length);
+    activeData.push(adminAllUsers.filter(u =>
+      (u.sessions || []).some(s => s.date === dateStr) ||
+      (u.logs || []).some(l => l.date === dateStr)
+    ).length);
+  }
+  makeChart("chart-admin-signups", "bar", labels, signupData, "New Signups", "#4f8ef7");
+  makeChart("chart-admin-active", "line", labels, activeData, "Active Users", "#6ee7b7");
+
+  // Domain distribution
+  const domainCount = {};
+  adminAllUsers.forEach(u => { const d = u.domain || "Other"; domainCount[d] = (domainCount[d] || 0) + 1; });
+  const domainLabels = Object.keys(domainCount);
+  const domainData = Object.values(domainCount);
+  const colors = ["#4f8ef7","#6ee7b7","#f59e42","#ef4444","#a78bfa","#34d399","#fb923c","#60a5fa"];
+  const canvas = document.getElementById("chart-admin-domains");
+  if (canvas) {
+    if (chartInstances["chart-admin-domains"]) chartInstances["chart-admin-domains"].destroy();
+    chartInstances["chart-admin-domains"] = new Chart(canvas, {
+      type: "doughnut",
+      data: { labels: domainLabels, datasets: [{ data: domainData, backgroundColor: colors }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } }
+    });
+  }
+}
 
 // ===== USER DETAIL MODAL =====
 window.openUserDetail = function(uid) {
@@ -288,56 +425,45 @@ window.openUserDetail = function(uid) {
   if (!u) return;
   const { sessions = [], logs = [], tasks = [], reflections = [] } = u;
   const today = todayStr();
-
   const goalList = Array.isArray(u.goals) ? u.goals : (u.goals ? [u.goals] : []);
   const joined = u.createdAt ? u.createdAt.split("T")[0] : "–";
 
-  // Activity history — group sessions by date
   const sessionsByDate = {};
   sessions.forEach(s => {
     if (!sessionsByDate[s.date]) sessionsByDate[s.date] = 0;
     sessionsByDate[s.date] += s.duration || 0;
   });
   const historyRows = Object.entries(sessionsByDate)
-    .sort((a, b) => b[0].localeCompare(a[0]))
-    .slice(0, 14)
+    .sort((a, b) => b[0].localeCompare(a[0])).slice(0, 14)
     .map(([date, secs]) => {
       const h = +(secs / 3600).toFixed(1);
       const dayTasks = tasks.filter(t => t.date === date && t.completed).length;
       const dayLogs = logs.filter(l => l.date === date);
       const lastEnergy = dayLogs.length > 0 ? dayLogs[dayLogs.length - 1].energyLevel : "–";
-      return `<tr>
-        <td>${date}</td>
-        <td>${h}h</td>
-        <td>${dayTasks}</td>
-        <td>${lastEnergy}</td>
-      </tr>`;
+      return `<tr><td>${date}</td><td>${h}h</td><td>${dayTasks}</td><td>${lastEnergy}</td></tr>`;
     }).join("") || `<tr><td colspan="4" style="color:var(--text-muted);text-align:center">No activity yet</td></tr>`;
 
-  // Reflections
-  const reflectionRows = reflections
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 5)
+  const reflectionRows = reflections.sort((a, b) => b.timestamp - a.timestamp).slice(0, 5)
     .map(r => `<div style="border-bottom:1px solid var(--border);padding:10px 0">
       <p style="font-size:0.75rem;color:var(--text-muted)">${r.date}</p>
       <p style="font-size:0.85rem;margin-top:4px"><strong>Drained:</strong> ${escHtml(r.drained)}</p>
       <p style="font-size:0.85rem;margin-top:2px"><strong>Energized:</strong> ${escHtml(r.energized)}</p>
     </div>`).join("") || `<p style="color:var(--text-muted);font-size:0.85rem">No reflections yet.</p>`;
 
-  const modal = document.getElementById("user-detail-modal");
-  document.getElementById("udm-name").textContent = u.name || "–";
-  document.getElementById("udm-email").textContent = u.email || "–";
-  document.getElementById("udm-domain").textContent = u.domain || "–";
-  document.getElementById("udm-role").textContent = u.role || "–";
-  document.getElementById("udm-joined").textContent = joined;
-  document.getElementById("udm-goals").innerHTML = goalList.map(g => `<span class="badge">${escHtml(g)}</span>`).join(" ") || "–";
-  document.getElementById("udm-total-focus").textContent = +(sessions.reduce((s, x) => s + (x.duration || 0), 0) / 3600).toFixed(1) + "h";
-  document.getElementById("udm-total-sessions").textContent = sessions.length;
-  document.getElementById("udm-total-tasks").textContent = tasks.filter(t => t.completed).length;
-  document.getElementById("udm-total-reflections").textContent = reflections.length;
-  document.getElementById("udm-history-tbody").innerHTML = historyRows;
-  document.getElementById("udm-reflections").innerHTML = reflectionRows;
-  modal.classList.remove("hidden");
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
+  set("udm-name", escHtml(u.name || "–"));
+  set("udm-email", escHtml(u.email || "–"));
+  set("udm-domain", escHtml(u.domain || "–"));
+  set("udm-role", escHtml(u.role || "–"));
+  set("udm-joined", joined);
+  set("udm-goals", goalList.map(g => `<span class="badge">${escHtml(g)}</span>`).join(" ") || "–");
+  set("udm-total-focus", +(sessions.reduce((s, x) => s + (x.duration || 0), 0) / 3600).toFixed(1) + "h");
+  set("udm-total-sessions", sessions.length);
+  set("udm-total-tasks", tasks.filter(t => t.completed).length);
+  set("udm-total-reflections", reflections.length);
+  set("udm-history-tbody", historyRows);
+  set("udm-reflections", reflectionRows);
+  document.getElementById("user-detail-modal").classList.remove("hidden");
 };
 
 window.closeUserDetail = function() {
@@ -1036,3 +1162,4 @@ window.loginAdmin = window.loginAdmin || loginAdmin;
 window.adminSearch = window.adminSearch || adminSearch;
 window.openUserDetail = window.openUserDetail || openUserDetail;
 window.closeUserDetail = window.closeUserDetail || closeUserDetail;
+window.showAdminPage = window.showAdminPage || showAdminPage;
