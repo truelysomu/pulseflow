@@ -56,10 +56,16 @@ onAuthStateChanged(auth, async (user) => {
       return;
     }
     const profile = await loadUserProfile(user.uid);
-    if (!profile || !profile.onboardingComplete) {
+    // treat as complete if onboardingComplete is true OR if they have a name (old profiles)
+    if (!profile || (!profile.onboardingComplete && !profile.name)) {
       showSection("onboarding-section");
     } else {
       userProfile = profile;
+      // backfill onboardingComplete for old profiles
+      if (profile.name && !profile.onboardingComplete) {
+        await update(ref(db, `users/${user.uid}`), { onboardingComplete: true });
+        userProfile.onboardingComplete = true;
+      }
       initApp();
     }
   } else {
@@ -288,7 +294,7 @@ function updateAdminDashStats(users, today) {
     const ts = sessions.filter(s => s.date === today);
     const focusH = ts.reduce((s, x) => s + (x.duration || 0), 0) / 3600;
     totalFocus += focusH;
-    if (ts.length > 0 || logs.filter(l => l.date === today).length > 0) activeToday++;
+    if (ts.length > 0 || logs.filter(l => l.date === today).length > 0 || u.lastSeen === today) activeToday++;
     const todayLogs = logs.filter(l => l.date === today);
     const lowRatio = todayLogs.length > 0 ? todayLogs.filter(l => l.energyLevel === "Low").length / todayLogs.length : 0;
     let score = 0;
@@ -522,6 +528,11 @@ async function initApp() {
   showSection("app-section");
   renderProfile();
   updateGreeting();
+
+  // Mark user as active today
+  if (currentUser) {
+    await update(ref(db, `users/${currentUser.uid}`), { lastSeen: todayStr() });
+  }
 
   // Show admin nav only for admin
   const isAdmin = currentUser && currentUser.email === ADMIN_EMAIL;
