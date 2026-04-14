@@ -207,7 +207,6 @@ async function initAdminApp() {
   if (adminEmail) adminEmail.textContent = currentUser.email;
   showAdminPage("admin-dashboard-page");
   await loadAdminPanel();
-  renderRecentUsers();
 }
 
 function renderRecentUsers() {

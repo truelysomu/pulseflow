@@ -206,9 +206,6 @@
       <div class="nav-item" onclick="showPage('reflect-page')" data-page="reflect-page">
         <span class="nav-icon">📝</span> Reflect
       </div>
-      <div class="nav-item admin-nav hidden" onclick="showPage('admin-page')" data-page="admin-page">
-        <span class="nav-icon">🛡️</span> Admin
-      </div>
     </div>
     <div class="sidebar-footer">
       <div class="sidebar-user" id="sidebar-user">
@@ -522,56 +519,6 @@
     </div>
 
     <!-- ===== ADMIN PAGE ===== -->
-    <div id="admin-page" class="page">
-      <div class="page-header">
-        <h2>🛡️ Admin Panel</h2>
-        <p>Manage and monitor all PulseFlow users.</p>
-      </div>
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-icon">👥</div>
-          <div class="stat-value" id="admin-stat-users">0</div>
-          <div class="stat-label">Total Users</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">🟢</div>
-          <div class="stat-value" id="admin-stat-active">0</div>
-          <div class="stat-label">Active Today</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">🔥</div>
-          <div class="stat-value" id="admin-stat-burnout">0</div>
-          <div class="stat-label">High Burnout Risk</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">⏱️</div>
-          <div class="stat-value" id="admin-stat-focus">0h</div>
-          <div class="stat-label">Total Focus Today</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">👤 Registered Users</div>
-        <div style="margin-bottom:14px">
-          <input type="text" id="admin-search-input" placeholder="🔍 Search by name, email, domain or role..." oninput="adminSearch()"
-            style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.9rem;outline:none;background:var(--bg)" />
-        </div>
-        <div style="overflow-x:auto">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Name</th><th>Email</th><th>Domain</th><th>Role</th>
-                <th>Joined</th><th>Focus Today</th><th>Sessions</th>
-                <th>Tasks Done</th><th>Reflections</th><th>Burnout</th><th></th>
-              </tr>
-            </thead>
-            <tbody id="admin-user-tbody">
-              <tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:20px">Loading...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
   </main>
 </div>
 
