@@ -256,7 +256,9 @@ async function loadAdminPanel() {
   const tbody = document.getElementById("admin-user-tbody");
   if (tbody) tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:20px">Loading...</td></tr>`;
   try {
+    console.log("loadAdminPanel: reading users node...");
     const usersSnap = await get(ref(db, "users"));
+    console.log("usersSnap exists:", usersSnap.exists(), "val:", usersSnap.val());
     if (!usersSnap.exists()) {
       if (tbody) tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:20px">No users found.</td></tr>`;
       updateAdminDashStats([], []);
