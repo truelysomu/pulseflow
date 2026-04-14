@@ -56,7 +56,7 @@ onAuthStateChanged(auth, async (user) => {
       return;
     }
     const profile = await loadUserProfile(user.uid);
-    if (!profile) {
+    if (!profile || !profile.onboardingComplete) {
       showSection("onboarding-section");
     } else {
       userProfile = profile;
@@ -127,7 +127,17 @@ window.signupUser = async function() {
   if (!email || !pass) { errEl.textContent = "Please fill in all fields."; return; }
   if (pass.length < 6) { errEl.textContent = "Password must be at least 6 characters."; return; }
   try {
-    await createUserWithEmailAndPassword(auth, email, pass);
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    // Save stub profile immediately so admin can see all registered users
+    await set(ref(db, `users/${cred.user.uid}`), {
+      email,
+      name: "",
+      domain: "",
+      role: "",
+      goals: [],
+      onboardingComplete: false,
+      createdAt: new Date().toISOString()
+    });
   } catch (e) {
     errEl.textContent = friendlyAuthError(e.code);
   }
@@ -483,8 +493,11 @@ window.saveOnboarding = async function() {
     return;
   }
   const goals = Array.from(goalEls).map(el => el.value);
-  const profile = { name, domain, role, goals, email: currentUser.email, createdAt: new Date().toISOString() };
   try {
+    // Preserve original createdAt from stub if it exists
+    const existing = await loadUserProfile(currentUser.uid);
+    const createdAt = (existing && existing.createdAt) ? existing.createdAt : new Date().toISOString();
+    const profile = { name, domain, role, goals, email: currentUser.email, createdAt, onboardingComplete: true };
     await set(ref(db, `users/${currentUser.uid}`), profile);
     userProfile = profile;
     initApp();
