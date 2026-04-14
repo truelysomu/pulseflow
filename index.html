@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PulseFlow – Your Calm Productivity Assistant</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ===================== AUTH SECTION ===================== -->
+<div id="auth-section">
+
+  <!-- ROLE SELECT -->
+  <div id="role-select-view" class="auth-card">
+    <div class="auth-logo">
+      <h1>🌿 PulseFlow</h1>
+      <p>Your calm productivity assistant</p>
+    </div>
+    <h2>Sign in as</h2>
+    <div class="role-select-btns">
+      <button class="role-btn" onclick="showView('login-view')">
+        <span class="role-icon">👤</span>
+        <span class="role-label">User</span>
+        <span class="role-desc">Access your personal dashboard</span>
+      </button>
+      <button class="role-btn role-btn-admin" onclick="showView('admin-login-view')">
+        <span class="role-icon">🛡️</span>
+        <span class="role-label">Admin</span>
+        <span class="role-desc">Manage and monitor all users</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="login-view" class="auth-card hidden">
+    <div class="auth-logo">
+      <h1>🌿 PulseFlow</h1>
+      <p>Your calm productivity assistant</p>
+    </div>
+    <h2>Welcome back</h2>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="you@email.com" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="••••••••" />
+    </div>
+    <div class="error-msg" id="login-error"></div>
+    <button class="btn btn-primary" onclick="loginUser()">Sign In</button>
+    <div class="auth-links">
+      <a onclick="showView('forgot-view')">Forgot password?</a> &nbsp;·&nbsp;
+      No account? <a onclick="showView('signup-view')">Sign up</a>
+      &nbsp;·&nbsp; <a onclick="showView('role-select-view')">← Back</a>
+    </div>
+  </div>
+
+  <!-- ADMIN LOGIN -->
+  <div id="admin-login-view" class="auth-card hidden">
+    <div class="auth-logo">
+      <h1>🛡️ PulseFlow</h1>
+      <p>Admin access only</p>
+    </div>
+    <h2>Admin Sign In</h2>
+    <div class="form-group">
+      <label>Admin Email</label>
+      <input type="email" id="admin-login-email" placeholder="admin@email.com" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="admin-login-password" placeholder="••••••••" />
+    </div>
+    <div class="error-msg" id="admin-login-error"></div>
+    <button class="btn btn-primary" onclick="loginAdmin()">Sign In as Admin</button>
+    <div class="auth-links">
+      <a onclick="showView('role-select-view')">← Back</a>
+    </div>
+  </div>
+
+  <!-- SIGNUP -->
+  <div id="signup-view" class="auth-card hidden">
+    <div class="auth-logo">
+      <h1>🌿 PulseFlow</h1>
+      <p>Your calm productivity assistant</p>
+    </div>
+    <h2>Create account</h2>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="signup-email" placeholder="you@email.com" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="signup-password" placeholder="Min 6 characters" />
+    </div>
+    <div class="error-msg" id="signup-error"></div>
+    <button class="btn btn-primary" onclick="signupUser()">Create Account</button>
+    <div class="auth-links">
+      Already have an account? <a onclick="showView('login-view')">Sign in</a>
+    </div>
+  </div>
+
+  <!-- FORGOT PASSWORD -->
+  <div id="forgot-view" class="auth-card hidden">
+    <div class="auth-logo">
+      <h1>🌿 PulseFlow</h1>
+    </div>
+    <h2>Reset password</h2>
+    <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:16px;">
+      Enter your email and we'll send a reset link.
+    </p>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="forgot-email" placeholder="you@email.com" />
+    </div>
+    <div class="error-msg" id="forgot-error"></div>
+    <div class="success-msg hidden" id="forgot-success">Reset email sent! Check your inbox.</div>
+    <button class="btn btn-primary" onclick="resetPassword()">Send Reset Link</button>
+    <div class="auth-links">
+      <a onclick="showView('login-view')">← Back to login</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===================== ONBOARDING SECTION ===================== -->
+<div id="onboarding-section" class="hidden">
+  <div class="onboarding-card">
+    <h2>👋 Let's set you up</h2>
+    <p class="subtitle">Just a few quick questions to personalize your experience.</p>
+
+    <div class="form-group">
+      <label>Your Name</label>
+      <input type="text" id="ob-name" placeholder="e.g. Alex" />
+    </div>
+    <div class="form-group">
+      <label>Domain</label>
+      <select id="ob-domain">
+        <option value="">Select domain...</option>
+        <option>Software</option>
+        <option>Marketing</option>
+        <option>Design</option>
+        <option>Student</option>
+        <option>Finance</option>
+        <option>Healthcare</option>
+        <option>Education</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Role</label>
+      <select id="ob-role">
+        <option value="">Select role...</option>
+        <option>Developer</option>
+        <option>Manager</option>
+        <option>Intern</option>
+        <option>Designer</option>
+        <option>Analyst</option>
+        <option>Founder</option>
+        <option>Student</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Your Goals <span style="font-size:0.78rem;color:var(--text-muted)">(select all that apply)</span></label>
+      <div class="goal-options">
+        <label class="goal-option"><input type="checkbox" name="ob-goal" value="Reduce Burnout" /> 🔥 Reduce Burnout</label>
+        <label class="goal-option"><input type="checkbox" name="ob-goal" value="Improve Productivity" /> ⚡ Improve Productivity</label>
+        <label class="goal-option"><input type="checkbox" name="ob-goal" value="Work-Life Balance" /> ⚖️ Work-Life Balance</label>
+        <label class="goal-option"><input type="checkbox" name="ob-goal" value="Reduce Stress" /> 🧘 Reduce Stress</label>
+        <label class="goal-option"><input type="checkbox" name="ob-goal" value="Better Focus" /> 🎯 Better Focus</label>
+        <label class="goal-option"><input type="checkbox" name="ob-goal" value="Build Healthy Habits" /> 🌱 Build Healthy Habits</label>
+        <label class="goal-option"><input type="checkbox" name="ob-goal" value="Manage Energy Better" /> ⚡ Manage Energy Better</label>
+        <label class="goal-option"><input type="checkbox" name="ob-goal" value="Avoid Overworking" /> 🚫 Avoid Overworking</label>
+        <label class="goal-option"><input type="checkbox" name="ob-goal" value="Stay Motivated" /> 💪 Stay Motivated</label>
+        <label class="goal-option"><input type="checkbox" name="ob-goal" value="Track Progress" /> 📊 Track Progress</label>
+      </div>
+    </div>
+    <div class="error-msg" id="ob-error"></div>
+    <button class="btn btn-primary" onclick="saveOnboarding()">Get Started →</button>
+  </div>
+</div>
+
+<!-- ===================== APP SECTION ===================== -->
+<div id="app-section" class="hidden">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <h2>🌿 PulseFlow</h2>
+      <span>Calm. Focused. Balanced.</span>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" onclick="showPage('dashboard-page')" data-page="dashboard-page">
+        <span class="nav-icon">🏠</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('planner-page')" data-page="planner-page">
+        <span class="nav-icon">📅</span> Planner
+      </div>
+      <div class="nav-item" onclick="showPage('focus-page')" data-page="focus-page">
+        <span class="nav-icon">⏱️</span> Focus
+      </div>
+      <div class="nav-item" onclick="showPage('insights-page')" data-page="insights-page">
+        <span class="nav-icon">📊</span> Insights
+      </div>
+      <div class="nav-item" onclick="showPage('reflect-page')" data-page="reflect-page">
+        <span class="nav-icon">📝</span> Reflect
+      </div>
+      <div class="nav-item admin-nav hidden" onclick="showPage('admin-page')" data-page="admin-page">
+        <span class="nav-icon">🛡️</span> Admin
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" id="sidebar-user">
+        <div class="sidebar-avatar" id="sidebar-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div id="sidebar-name" style="font-weight:600;font-size:0.85rem">–</div>
+          <div id="sidebar-role" style="font-size:0.75rem;color:var(--text-muted)">–</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="topbar-left" id="topbar-title">Dashboard</div>
+      <div class="topbar-right">
+        <div class="profile-menu-wrap">
+          <div class="topbar-avatar" id="topbar-avatar" onclick="toggleProfileMenu()">A</div>
+          <div class="profile-dropdown hidden" id="profile-dropdown">
+            <div class="profile-dropdown-header">
+              <div class="profile-pic-wrap">
+                <img id="dropdown-pic" src="" alt="" style="display:none;width:56px;height:56px;border-radius:50%;object-fit:cover;" />
+                <div class="profile-pic-initials" id="dropdown-initials">A</div>
+                <label class="pic-upload-btn" title="Change photo">
+                  📷
+                  <input type="file" id="profile-pic-input" accept="image/*" onchange="uploadProfilePic(this)" style="display:none" />
+                </label>
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:1rem" id="dropdown-name">–</div>
+                <div style="font-size:0.78rem;color:var(--text-muted)" id="dropdown-email">–</div>
+              </div>
+            </div>
+            <div class="profile-dropdown-body">
+              <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:6px">Domain & Role</div>
+              <div style="font-size:0.88rem;margin-bottom:10px">
+                <span class="badge" id="dropdown-domain">–</span>
+                <span class="badge" id="dropdown-role">–</span>
+              </div>
+              <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px">Goals</div>
+              <div id="dropdown-goals" style="font-size:0.83rem;line-height:1.7"></div>
+            </div>
+            <div class="profile-dropdown-footer">
+              <button class="btn btn-secondary btn-sm" style="width:100%" onclick="logoutUser()">Sign Out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== DASHBOARD PAGE ===== -->
+    <div id="dashboard-page" class="page active">
+      <div class="page-header">
+        <h2 id="dash-greeting">Good morning ☀️</h2>
+        <p id="dash-date"></p>
+      </div>
+
+      <!-- Break banner -->
+      <div id="break-banner" class="break-banner hidden">
+        🧘 You've been working a while. Time for a quick break — stretch, rest your eyes, or take a short walk.
+        <button class="btn btn-sm btn-secondary" style="margin-left:auto" onclick="dismissBreak()">Got it</button>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" id="stat-tasks">0</div>
+          <div class="stat-label">Tasks Done</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-value" id="stat-focus">0h</div>
+          <div class="stat-label">Focus Time</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-value" id="stat-sessions">0</div>
+          <div class="stat-label">Sessions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-value" id="stat-energy">–</div>
+          <div class="stat-label">Last Energy</div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+
+        <!-- Burnout Indicator -->
+        <div class="card burnout-card">
+          <div class="card-title">🔥 Burnout Status</div>
+          <div id="burnout-indicator" class="burnout-indicator healthy">
+            <div class="burnout-dot"></div>
+            <span id="burnout-label">🟢 Healthy</span>
+          </div>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-top:10px" id="burnout-detail">
+            Keep it up! You're maintaining a healthy work rhythm.
+          </p>
+        </div>
+
+        <!-- Energy Check-in -->
+        <div class="card">
+          <div class="card-title">⚡ Energy Check-In</div>
+          <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:14px">How's your energy right now?</p>
+          <div class="energy-buttons">
+            <button class="energy-btn low-btn" onclick="logEnergy('Low')">😴<br><span>Low</span></button>
+            <button class="energy-btn mid-btn" onclick="logEnergy('Medium')">😊<br><span>Medium</span></button>
+            <button class="energy-btn high-btn" onclick="logEnergy('High')">🚀<br><span>High</span></button>
+          </div>
+        </div>
+
+        <!-- Smart Suggestions -->
+        <div class="card full-width">
+          <div class="card-title">🤖 Smart Suggestions</div>
+          <div id="suggestions-container">
+            <div class="suggestion-card">Log your energy to get personalized suggestions.</div>
+          </div>
+        </div>
+
+        <!-- Boundary Guard -->
+        <div class="card full-width hidden" id="boundary-guard-card">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="font-size:2rem">🚫</span>
+            <div>
+              <strong style="color:var(--danger)">You've worked enough today.</strong>
+              <p style="font-size:0.85rem;color:var(--text-muted);margin-top:3px">
+                You've logged over 8 hours. Consider logging off and recharging.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== PLANNER PAGE ===== -->
+    <div id="planner-page" class="page">
+      <div class="page-header">
+        <h2>📅 Daily Energy Planner</h2>
+        <p>Plan your day around your energy levels.</p>
+      </div>
+
+      <div class="time-blocks">
+
+        <!-- Morning -->
+        <div class="time-block morning">
+          <div class="time-block-header">🌤️ Morning</div>
+          <div class="time-block-body">
+            <ul class="task-list" id="tasks-morning"></ul>
+            <div class="add-task-form">
+              <div class="add-task-row">
+                <input type="text" id="task-name-morning" placeholder="Task name" />
+                <input type="time" id="task-time-morning" />
+                <select id="task-energy-morning">
+                  <option value="Low">Low Energy</option>
+                  <option value="Medium" selected>Medium Energy</option>
+                  <option value="High">High Energy</option>
+                </select>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="addTask('morning')">+ Add Task</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Afternoon -->
+        <div class="time-block afternoon">
+          <div class="time-block-header">☀️ Afternoon</div>
+          <div class="time-block-body">
+            <ul class="task-list" id="tasks-afternoon"></ul>
+            <div class="add-task-form">
+              <div class="add-task-row">
+                <input type="text" id="task-name-afternoon" placeholder="Task name" />
+                <input type="time" id="task-time-afternoon" />
+                <select id="task-energy-afternoon">
+                  <option value="Low">Low Energy</option>
+                  <option value="Medium" selected>Medium Energy</option>
+                  <option value="High">High Energy</option>
+                </select>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="addTask('afternoon')">+ Add Task</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Evening -->
+        <div class="time-block evening">
+          <div class="time-block-header">🌙 Evening</div>
+          <div class="time-block-body">
+            <ul class="task-list" id="tasks-evening"></ul>
+            <div class="add-task-form">
+              <div class="add-task-row">
+                <input type="text" id="task-name-evening" placeholder="Task name" />
+                <input type="time" id="task-time-evening" />
+                <select id="task-energy-evening">
+                  <option value="Low">Low Energy</option>
+                  <option value="Medium" selected>Medium Energy</option>
+                  <option value="High">High Energy</option>
+                </select>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="addTask('evening')">+ Add Task</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== FOCUS PAGE ===== -->
+    <div id="focus-page" class="page">
+      <div class="page-header">
+        <h2>⏱️ Focus Mode</h2>
+        <p>Track your deep work sessions.</p>
+      </div>
+
+      <div class="card" style="max-width:420px;margin:0 auto">
+        <div class="card-title">Work Session Timer</div>
+        <div class="timer-display" id="timer-display">00:00:00</div>
+        <div class="timer-controls">
+          <button class="btn btn-primary" id="timer-start-btn" onclick="startTimer()">▶ Start Work</button>
+          <button class="btn btn-danger hidden" id="timer-stop-btn" onclick="stopTimer()">⏹ Stop</button>
+        </div>
+        <div class="timer-stats">
+          <span>Today: <strong id="timer-total-today">0h 0m</strong></span>
+          <span>Sessions: <strong id="timer-sessions-today">0</strong></span>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:420px;margin:22px auto 0">
+        <div class="card-title">🧘 Break Suggestions</div>
+        <div id="break-suggestions">
+          <p style="color:var(--text-muted);font-size:0.88rem">
+            Start a session to get break suggestions after 60+ minutes.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== INSIGHTS PAGE ===== -->
+    <div id="insights-page" class="page">
+      <div class="page-header">
+        <h2>📊 Insights</h2>
+        <p>Understand your patterns over time.</p>
+      </div>
+
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setInsightFilter('daily', this)">Daily</button>
+        <button class="filter-tab" onclick="setInsightFilter('weekly', this)">Weekly</button>
+        <button class="filter-tab" onclick="setInsightFilter('monthly', this)">Monthly</button>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-title">⚡ Energy Trend</div>
+          <div class="chart-container">
+            <canvas id="chart-energy"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">✅ Tasks Completed</div>
+          <div class="chart-container">
+            <canvas id="chart-tasks"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">🔥 Burnout Trend</div>
+          <div class="chart-container">
+            <canvas id="chart-burnout"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">⏱️ Focus Time</div>
+          <div class="chart-container">
+            <canvas id="chart-focus"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== REFLECT PAGE ===== -->
+    <div id="reflect-page" class="page">
+      <div class="page-header">
+        <h2>📝 Weekly Reflection</h2>
+        <p>A moment to pause and check in with yourself.</p>
+      </div>
+
+      <div class="card" style="max-width:560px">
+        <div class="card-title">This Week's Reflection</div>
+        <div class="reflection-form">
+          <div class="form-group">
+            <label>What drained you this week?</label>
+            <textarea id="reflect-drained" placeholder="e.g. Too many meetings, unclear priorities..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>What gave you energy this week?</label>
+            <textarea id="reflect-energized" placeholder="e.g. Deep work sessions, team wins..."></textarea>
+          </div>
+          <div class="error-msg" id="reflect-error"></div>
+          <button class="btn btn-primary" onclick="saveReflection()">Save Reflection</button>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:560px">
+        <div class="card-title">Past Reflections</div>
+        <div id="past-reflections">
+          <p style="color:var(--text-muted);font-size:0.88rem">No reflections yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN PAGE ===== -->
+    <div id="admin-page" class="page">
+      <div class="page-header">
+        <h2>🛡️ Admin Panel</h2>
+        <p>Manage and monitor all PulseFlow users.</p>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value" id="admin-stat-users">0</div>
+          <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🟢</div>
+          <div class="stat-value" id="admin-stat-active">0</div>
+          <div class="stat-label">Active Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-value" id="admin-stat-burnout">0</div>
+          <div class="stat-label">High Burnout Risk</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-value" id="admin-stat-focus">0h</div>
+          <div class="stat-label">Total Focus Today</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">👤 Registered Users</div>
+        <div style="margin-bottom:14px">
+          <input type="text" id="admin-search-input" placeholder="🔍 Search by name, email, domain or role..." oninput="adminSearch()"
+            style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.9rem;outline:none;background:var(--bg)" />
+        </div>
+        <div style="overflow-x:auto">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Email</th><th>Domain</th><th>Role</th>
+                <th>Joined</th><th>Focus Today</th><th>Sessions</th>
+                <th>Tasks Done</th><th>Reflections</th><th>Burnout</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="admin-user-tbody">
+              <tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:20px">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ===== USER DETAIL MODAL ===== -->
+<div id="user-detail-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeUserDetail()">
+  <div class="modal" style="max-width:640px;width:95%;max-height:85vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <h3>👤 User Profile</h3>
+      <button class="btn btn-sm btn-secondary" onclick="closeUserDetail()">✕ Close</button>
+    </div>
+
+    <!-- Profile info -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+      <div class="udm-field"><span class="udm-label">Name</span><span id="udm-name">–</span></div>
+      <div class="udm-field"><span class="udm-label">Email</span><span id="udm-email" style="font-size:0.82rem">–</span></div>
+      <div class="udm-field"><span class="udm-label">Domain</span><span id="udm-domain">–</span></div>
+      <div class="udm-field"><span class="udm-label">Role</span><span id="udm-role">–</span></div>
+      <div class="udm-field"><span class="udm-label">Joined</span><span id="udm-joined">–</span></div>
+    </div>
+
+    <!-- Goals -->
+    <div style="margin-bottom:18px">
+      <div class="udm-label" style="margin-bottom:6px">Goals</div>
+      <div id="udm-goals"></div>
+    </div>
+
+    <!-- All-time stats -->
+    <div class="stats-row" style="margin-bottom:18px">
+      <div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-value" id="udm-total-focus">0h</div><div class="stat-label">Total Focus</div></div>
+      <div class="stat-card"><div class="stat-icon">🎯</div><div class="stat-value" id="udm-total-sessions">0</div><div class="stat-label">Sessions</div></div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="udm-total-tasks">0</div><div class="stat-label">Tasks Done</div></div>
+      <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-value" id="udm-total-reflections">0</div><div class="stat-label">Reflections</div></div>
+    </div>
+
+    <!-- Activity history -->
+    <div style="margin-bottom:18px">
+      <div class="card-title">📅 Activity History (last 14 days)</div>
+      <div style="overflow-x:auto">
+        <table class="admin-table">
+          <thead><tr><th>Date</th><th>Focus</th><th>Tasks Done</th><th>Energy</th></tr></thead>
+          <tbody id="udm-history-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Reflections -->
+    <div>
+      <div class="card-title">📝 Recent Reflections</div>
+      <div id="udm-reflections"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div id="toast-container"></div>
+
+<!-- ===== INACTIVE MODAL ===== -->
+<div id="inactive-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>👀 Still there?</h3>
+    <p style="color:var(--text-muted);font-size:0.9rem">
+      You seem inactive. Are you still working?
+    </p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="dismissInactive()">Take a Break</button>
+      <button class="btn btn-primary" onclick="dismissInactive()">Yes, I'm here</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<!-- Chart.js must load before the module -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- PulseFlow app module -->
+<script type="module" src="working.js"></script>
+
+</body>
+</html>
