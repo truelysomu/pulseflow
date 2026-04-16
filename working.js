@@ -309,7 +309,7 @@ async function loadAdminPanel() {
         dbGetAll(`tasks/${u.uid}`),
         dbGetAll(`reflections/${u.uid}`)
       ]);
-      return { ...u, sessions, logs, tasks, reflections };
+      return normalizeProfile({ ...u, sessions, logs, tasks, reflections });
     }));
     adminAllUsers = userData;
 
@@ -387,6 +387,17 @@ function renderAdminNotifications(users, today) {
   container.innerHTML = notes.map(n => `
     <div class="admin-notif ${n.type}">${n.msg}</div>
   `).join("");
+}
+
+function normalizeProfile(u) {
+  // Handle old profiles: goal (string) → goals (array), missing email/onboardingComplete
+  const goals = u.goals
+    ? (Array.isArray(u.goals) ? u.goals : [u.goals])
+    : (u.goal ? [u.goal] : []);
+  const onboardingComplete = u.onboardingComplete !== undefined
+    ? u.onboardingComplete
+    : !!(u.name); // old profiles with name are considered complete
+  return { ...u, goals, onboardingComplete };
 }
 
 function renderAdminTable(users, today) {
