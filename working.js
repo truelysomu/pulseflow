@@ -172,6 +172,7 @@ window.resetPassword = async function() {
 window.logoutUser = async function() {
   stopTimerInternal();
   clearIntervals();
+  if (adminRefreshInterval) { clearInterval(adminRefreshInterval); adminRefreshInterval = null; }
   await signOut(auth);
 };
 
@@ -207,12 +208,24 @@ window.loginAdmin = async function() {
 };
 
 // ===== ADMIN APP INIT =====
+let adminRefreshInterval = null;
+
 async function initAdminApp() {
   const adminEmail = document.getElementById("admin-topbar-email");
   if (adminEmail) adminEmail.textContent = currentUser.email;
   showAdminPage("admin-dashboard-page");
   await loadAdminPanel();
+  // Auto-refresh every 30 seconds
+  if (adminRefreshInterval) clearInterval(adminRefreshInterval);
+  adminRefreshInterval = setInterval(loadAdminPanel, 30000);
 }
+
+window.refreshAdminPanel = async function() {
+  const btn = document.getElementById("admin-refresh-btn");
+  if (btn) { btn.textContent = "⟳ Refreshing..."; btn.disabled = true; }
+  await loadAdminPanel();
+  if (btn) { btn.textContent = "⟳ Refresh"; btn.disabled = false; }
+};
 
 function renderRecentUsers() {
   const container = document.getElementById("admin-recent-users");
@@ -260,9 +273,7 @@ async function loadAdminPanel() {
   const tbody = document.getElementById("admin-user-tbody");
   if (tbody) tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:20px">Loading...</td></tr>`;
   try {
-    console.log("loadAdminPanel: reading users node...");
     const usersSnap = await get(ref(db, "users"));
-    console.log("usersSnap exists:", usersSnap.exists(), "val:", usersSnap.val());
     if (!usersSnap.exists()) {
       if (tbody) tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:20px">No users found.</td></tr>`;
       updateAdminDashStats([], []);
@@ -282,13 +293,9 @@ async function loadAdminPanel() {
       return { ...u, sessions, logs, tasks, reflections };
     }));
     adminAllUsers = userData;
-    console.log("adminAllUsers count:", adminAllUsers.length, adminAllUsers.map(u => u.email || u.uid));
 
     try { renderAdminTable(adminAllUsers, today); } catch(e) { console.error("renderAdminTable error:", e); }
     try { updateAdminDashStats(adminAllUsers, today); } catch(e) { console.error("updateAdminDashStats error:", e); }
-    // debug: check if stat elements exist in DOM
-    console.log("admin-stat-users el:", document.getElementById("admin-stat-users"));
-    console.log("admin-user-tbody el:", document.getElementById("admin-user-tbody"));
     try { renderAdminNotifications(adminAllUsers, today); } catch(e) { console.error("renderAdminNotifications error:", e); }
     try { renderRecentUsers(); } catch(e) { console.error("renderRecentUsers error:", e); }
   } catch (e) {
@@ -1262,6 +1269,7 @@ window.adminSearch = window.adminSearch || adminSearch;
 window.openUserDetail = window.openUserDetail || openUserDetail;
 window.closeUserDetail = window.closeUserDetail || closeUserDetail;
 window.showAdminPage = window.showAdminPage || showAdminPage;
+window.refreshAdminPanel = window.refreshAdminPanel || refreshAdminPanel;
 window.plannerChangeDate = window.plannerChangeDate || plannerChangeDate;
 window.plannerGoToDate = window.plannerGoToDate || plannerGoToDate;
 window.plannerGoToToday = window.plannerGoToToday || plannerGoToToday;
