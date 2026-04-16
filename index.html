@@ -348,17 +348,26 @@
     <div id="planner-page" class="page">
       <div class="page-header">
         <h2>📅 Daily Energy Planner</h2>
-        <p>Plan your day around your energy levels.</p>
+        <p>Plan and view tasks for any day.</p>
+      </div>
+
+      <!-- Date navigation -->
+      <div class="date-nav">
+        <button class="btn btn-secondary btn-sm" onclick="plannerChangeDate(-1)">← Prev</button>
+        <div class="date-nav-center">
+          <input type="date" id="planner-date-input" onchange="plannerGoToDate(this.value)" />
+          <span id="planner-date-label" style="font-weight:700;font-size:1rem"></span>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="plannerChangeDate(1)">Next →</button>
+        <button class="btn btn-primary btn-sm" onclick="plannerGoToToday()">Today</button>
       </div>
 
       <div class="time-blocks">
-
-        <!-- Morning -->
         <div class="time-block morning">
           <div class="time-block-header">🌤️ Morning</div>
           <div class="time-block-body">
             <ul class="task-list" id="tasks-morning"></ul>
-            <div class="add-task-form">
+            <div class="add-task-form" id="add-form-morning">
               <div class="add-task-row">
                 <input type="text" id="task-name-morning" placeholder="Task name" />
                 <input type="time" id="task-time-morning" />
@@ -373,12 +382,11 @@
           </div>
         </div>
 
-        <!-- Afternoon -->
         <div class="time-block afternoon">
           <div class="time-block-header">☀️ Afternoon</div>
           <div class="time-block-body">
             <ul class="task-list" id="tasks-afternoon"></ul>
-            <div class="add-task-form">
+            <div class="add-task-form" id="add-form-afternoon">
               <div class="add-task-row">
                 <input type="text" id="task-name-afternoon" placeholder="Task name" />
                 <input type="time" id="task-time-afternoon" />
@@ -393,12 +401,11 @@
           </div>
         </div>
 
-        <!-- Evening -->
         <div class="time-block evening">
           <div class="time-block-header">🌙 Evening</div>
           <div class="time-block-body">
             <ul class="task-list" id="tasks-evening"></ul>
-            <div class="add-task-form">
+            <div class="add-task-form" id="add-form-evening">
               <div class="add-task-row">
                 <input type="text" id="task-name-evening" placeholder="Task name" />
                 <input type="time" id="task-time-evening" />
@@ -412,7 +419,6 @@
             </div>
           </div>
         </div>
-
       </div>
     </div>
 

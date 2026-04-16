@@ -108,6 +108,7 @@ window.showPage = function(pageId) {
   if (titleEl) titleEl.textContent = titles[pageId] || "";
   if (pageId === "insights-page") setTimeout(renderCharts, 150);
   if (pageId === "reflect-page") loadReflections();
+  if (pageId === "planner-page") { plannerDate = plannerDate || todayStr(); plannerUpdateLabel(); loadTasksForDate(plannerDate); }
 };
 
 // ===== AUTH FUNCTIONS =====
@@ -117,6 +118,11 @@ window.loginUser = async function() {
   const errEl = document.getElementById("login-error");
   errEl.textContent = "";
   if (!email || !pass) { errEl.textContent = "Please fill in all fields."; return; }
+  // Block admin from logging in via user login
+  if (email === ADMIN_EMAIL) {
+    errEl.textContent = "This account does not exist as a user. Please use Admin login.";
+    return;
+  }
   try {
     await signInWithEmailAndPassword(auth, email, pass);
   } catch (e) {
@@ -372,8 +378,8 @@ function renderAdminTable(users, today) {
     const burnoutState = score <= 1 ? "healthy" : score <= 3 ? "warning" : "high-risk";
     const joined = u.createdAt ? u.createdAt.split("T")[0] : "–";
     rows.push(`<tr style="cursor:pointer" onclick="openUserDetail('${u.uid}')">
-      <td><strong>${escHtml(u.name || "–")}</strong></td>
-      <td style="font-size:0.8rem">${escHtml(u.email || "–")}</td>
+      <td><strong>${escHtml(u.name || "(no name yet)")}</strong></td>
+      <td style="font-size:0.8rem">${escHtml(u.email || currentUser.email || "–")}</td>
       <td>${escHtml(u.domain || "–")}</td>
       <td>${escHtml(u.role || "–")}</td>
       <td>${joined}</td>
@@ -652,14 +658,63 @@ async function loadTodayStats() {
   }
 }
 
+// ===== PLANNER DATE STATE =====
+let plannerDate = todayStr();
+
+function plannerUpdateLabel() {
+  const d = new Date(plannerDate + "T00:00:00");
+  const today = todayStr();
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  const yStr = yesterday.toISOString().split("T")[0];
+  let label = d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  if (plannerDate === today) label += " (Today)";
+  else if (plannerDate === yStr) label += " (Yesterday)";
+  const el = document.getElementById("planner-date-label");
+  if (el) el.textContent = label;
+  const inp = document.getElementById("planner-date-input");
+  if (inp) inp.value = plannerDate;
+  // Hide add forms for past dates
+  const isPast = plannerDate < today;
+  ["morning","afternoon","evening"].forEach(p => {
+    const f = document.getElementById(`add-form-${p}`);
+    if (f) f.style.display = isPast ? "none" : "";
+  });
+}
+
+window.plannerChangeDate = function(delta) {
+  const d = new Date(plannerDate + "T00:00:00");
+  d.setDate(d.getDate() + delta);
+  plannerDate = d.toISOString().split("T")[0];
+  plannerUpdateLabel();
+  loadTasksForDate(plannerDate);
+};
+
+window.plannerGoToDate = function(val) {
+  if (!val) return;
+  plannerDate = val;
+  plannerUpdateLabel();
+  loadTasksForDate(plannerDate);
+};
+
+window.plannerGoToToday = function() {
+  plannerDate = todayStr();
+  plannerUpdateLabel();
+  loadTasksForDate(plannerDate);
+};
+
 // ===== TASK MANAGEMENT =====
 async function loadTasks() {
-  const today = todayStr();
+  plannerDate = todayStr();
+  plannerUpdateLabel();
+  await loadTasksForDate(plannerDate);
+}
+
+async function loadTasksForDate(dateStr) {
   const uid = currentUser.uid;
   const tasks = await dbGetAll(`tasks/${uid}`);
-  const todayTasks = tasks.filter(t => t.date === today);
-  renderTasks(todayTasks);
-  updateTaskStat(todayTasks);
+  const dateTasks = tasks.filter(t => t.date === dateStr);
+  renderTasks(dateTasks);
+  if (dateStr === todayStr()) updateTaskStat(dateTasks);
 }
 
 function renderTasks(tasks) {
@@ -699,7 +754,7 @@ window.addTask = async function(period) {
     energyLevel: energyEl.value,
     period,
     completed: false,
-    date: todayStr(),
+    date: plannerDate,
     timestamp: Date.now()
   };
   try {
@@ -789,14 +844,16 @@ function updateTimerDisplay() {
 function pad(n) { return String(n).padStart(2, "0"); }
 
 function updateTimerStats() {
-  const h = Math.floor(todayFocusSeconds / 3600);
-  const m = Math.floor((todayFocusSeconds % 3600) / 60);
+  const totalMins = Math.floor(todayFocusSeconds / 60);
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  const displayStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
   const focusEl = document.getElementById("timer-total-today");
-  if (focusEl) focusEl.textContent = `${h}h ${m}m`;
+  if (focusEl) focusEl.textContent = displayStr;
   const sessEl = document.getElementById("timer-sessions-today");
   if (sessEl) sessEl.textContent = todaySessionCount;
   const statFocus = document.getElementById("stat-focus");
-  if (statFocus) statFocus.textContent = `${h}h`;
+  if (statFocus) statFocus.textContent = h > 0 ? `${h}h` : `${m}m`;
   const statSess = document.getElementById("stat-sessions");
   if (statSess) statSess.textContent = todaySessionCount;
   checkBoundaryGuard();
@@ -1068,17 +1125,23 @@ async function renderCharts() {
 
       const daySessions = allSessions.filter(s => s.date === dateStr);
       const focusSecs = daySessions.reduce((s, sess) => s + (sess.duration || 0), 0);
-      focusData.push(+(focusSecs / 3600).toFixed(1));
+      // Use minutes for chart so short sessions show up
+      focusData.push(+(focusSecs / 60).toFixed(1));
 
-      const focusH = focusSecs / 3600;
+      const focusMins = focusSecs / 60;
       const lowRatio = dayLogs.length > 0 ? dayLogs.filter(l => l.energyLevel === "Low").length / dayLogs.length : 0;
-      burnoutData.push(+Math.min(10, focusH + lowRatio * 5).toFixed(1));
+      // Burnout: based on focus mins + low energy ratio + session count
+      let bScore = 0;
+      if (focusMins > 480) bScore += 3; else if (focusMins > 360) bScore += 2; else if (focusMins > 240) bScore += 1;
+      if (lowRatio > 0.6) bScore += 3; else if (lowRatio > 0.3) bScore += 1;
+      if (daySessions.length > 6) bScore += 1;
+      burnoutData.push(+Math.min(10, bScore).toFixed(1));
     }
 
     makeChart("chart-energy", "line", labels, energyData, "Energy", "#4f8ef7");
     makeChart("chart-tasks", "bar", labels, tasksData, "Tasks Done", "#6ee7b7");
     makeChart("chart-burnout", "line", labels, burnoutData, "Burnout Score", "#ef4444");
-    makeChart("chart-focus", "bar", labels, focusData, "Focus Hours", "#f59e42");
+    makeChart("chart-focus", "bar", labels, focusData, "Focus (mins)", "#f59e42");
   } catch (e) {
     console.error("Chart error:", e);
   }
@@ -1195,3 +1258,6 @@ window.adminSearch = window.adminSearch || adminSearch;
 window.openUserDetail = window.openUserDetail || openUserDetail;
 window.closeUserDetail = window.closeUserDetail || closeUserDetail;
 window.showAdminPage = window.showAdminPage || showAdminPage;
+window.plannerChangeDate = window.plannerChangeDate || plannerChangeDate;
+window.plannerGoToDate = window.plannerGoToDate || plannerGoToDate;
+window.plannerGoToToday = window.plannerGoToToday || plannerGoToToday;

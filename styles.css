@@ -1046,3 +1046,32 @@ body {
 .admin-notif.danger { border-left-color: var(--danger); background: #fef2f2; color: #dc2626; }
 .admin-notif.warning { border-left-color: var(--warning); background: #fffbeb; color: #d97706; }
 .admin-notif.success { border-left-color: var(--success); background: #f0fdf4; color: #16a34a; }
+
+/* ===== DATE NAV ===== */
+.date-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.date-nav-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+
+.date-nav-center input[type="date"] {
+  padding: 7px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  outline: none;
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.date-nav-center input[type="date"]:focus { border-color: var(--primary); }
