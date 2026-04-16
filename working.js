@@ -282,11 +282,12 @@ async function loadAdminPanel() {
       return { ...u, sessions, logs, tasks, reflections };
     }));
     adminAllUsers = userData;
+    console.log("adminAllUsers count:", adminAllUsers.length, adminAllUsers.map(u => u.email || u.uid));
 
-    renderAdminTable(adminAllUsers, today);
-    updateAdminDashStats(adminAllUsers, today);
-    renderAdminNotifications(adminAllUsers, today);
-    renderRecentUsers();
+    try { renderAdminTable(adminAllUsers, today); } catch(e) { console.error("renderAdminTable error:", e); }
+    try { updateAdminDashStats(adminAllUsers, today); } catch(e) { console.error("updateAdminDashStats error:", e); }
+    try { renderAdminNotifications(adminAllUsers, today); } catch(e) { console.error("renderAdminNotifications error:", e); }
+    try { renderRecentUsers(); } catch(e) { console.error("renderRecentUsers error:", e); }
   } catch (e) {
     console.error("Admin panel error:", e);
   }
