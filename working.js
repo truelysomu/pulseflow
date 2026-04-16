@@ -300,7 +300,12 @@ async function loadAdminPanel() {
     }
     const today = todayStr();
     adminAllUsers = [];
-    usersSnap.forEach(child => adminAllUsers.push({ uid: child.key, ...child.val() }));
+    usersSnap.forEach(child => {
+      const val = child.val();
+      console.log("user entry:", child.key, val);
+      adminAllUsers.push({ uid: child.key, ...val });
+    });
+    console.log("total adminAllUsers before fetch:", adminAllUsers.length);
 
     const userData = await Promise.all(adminAllUsers.map(async u => {
       const [sessions, logs, tasks, reflections] = await Promise.all([
