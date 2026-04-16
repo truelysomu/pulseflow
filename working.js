@@ -260,7 +260,7 @@ function renderRecentUsers() {
         ${escHtml((u.name || "?")[0].toUpperCase())}
       </div>
       <div style="flex:1">
-        <div style="font-weight:600;font-size:0.9rem">${escHtml(u.name || "–")}</div>
+        <div style="font-weight:600;font-size:0.9rem">${escHtml(u.name || "(signup only)")}</div>
         <div style="font-size:0.78rem;color:var(--text-muted)">${escHtml(u.email || "–")} · ${escHtml(u.domain || "–")} · ${escHtml(u.role || "–")}</div>
       </div>
       <div style="font-size:0.75rem;color:var(--text-muted)">${u.createdAt ? u.createdAt.split("T")[0] : "–"}</div>
@@ -407,9 +407,12 @@ function renderAdminTable(users, today) {
     if (todaySessions.length > 6) score += 1;
     const burnoutState = score <= 1 ? "healthy" : score <= 3 ? "warning" : "high-risk";
     const joined = u.createdAt ? u.createdAt.split("T")[0] : "–";
+    const statusBadge = u.onboardingComplete
+      ? `<span style="font-size:0.72rem;background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:10px;font-weight:600">✅ Active</span>`
+      : `<span style="font-size:0.72rem;background:#fffbeb;color:#d97706;padding:2px 8px;border-radius:10px;font-weight:600">⏳ Signup only</span>`;
     rows.push(`<tr style="cursor:pointer" onclick="openUserDetail('${u.uid}')">
-      <td><strong>${escHtml(u.name || "(no name yet)")}</strong></td>
-      <td style="font-size:0.8rem">${escHtml(u.email || currentUser.email || "–")}</td>
+      <td><strong>${escHtml(u.name || "–")}</strong> ${statusBadge}</td>
+      <td style="font-size:0.8rem">${escHtml(u.email || "–")}</td>
       <td>${escHtml(u.domain || "–")}</td>
       <td>${escHtml(u.role || "–")}</td>
       <td>${joined}</td>
