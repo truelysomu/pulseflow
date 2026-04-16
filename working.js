@@ -234,9 +234,9 @@ async function initAdminApp() {
   if (adminEmail) adminEmail.textContent = currentUser.email;
   showAdminPage("admin-dashboard-page");
   await loadAdminPanel();
-  // Auto-refresh every 30 seconds
+  // Auto-refresh every 2 minutes
   if (adminRefreshInterval) clearInterval(adminRefreshInterval);
-  adminRefreshInterval = setInterval(loadAdminPanel, 30000);
+  adminRefreshInterval = setInterval(loadAdminPanel, 120000);
 }
 
 window.refreshAdminPanel = async function() {
@@ -290,7 +290,6 @@ let adminAllUsers = [];
 
 async function loadAdminPanel() {
   const tbody = document.getElementById("admin-user-tbody");
-  if (tbody) tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:20px">Loading...</td></tr>`;
   try {
     const usersSnap = await get(ref(db, "users"));
     if (!usersSnap.exists()) {
@@ -319,6 +318,8 @@ async function loadAdminPanel() {
     try { renderRecentUsers(); } catch(e) { console.error("renderRecentUsers error:", e); }
   } catch (e) {
     console.error("Admin panel error:", e);
+    // Don't wipe existing data on error — just show a toast
+    showToast("Refresh failed", "Could not load latest data.", "warning");
   }
 }
 
