@@ -286,6 +286,9 @@ async function loadAdminPanel() {
 
     try { renderAdminTable(adminAllUsers, today); } catch(e) { console.error("renderAdminTable error:", e); }
     try { updateAdminDashStats(adminAllUsers, today); } catch(e) { console.error("updateAdminDashStats error:", e); }
+    // debug: check if stat elements exist in DOM
+    console.log("admin-stat-users el:", document.getElementById("admin-stat-users"));
+    console.log("admin-user-tbody el:", document.getElementById("admin-user-tbody"));
     try { renderAdminNotifications(adminAllUsers, today); } catch(e) { console.error("renderAdminNotifications error:", e); }
     try { renderRecentUsers(); } catch(e) { console.error("renderRecentUsers error:", e); }
   } catch (e) {
