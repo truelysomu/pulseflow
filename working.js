@@ -108,7 +108,6 @@ window.showPage = function(pageId) {
   if (titleEl) titleEl.textContent = titles[pageId] || "";
   if (pageId === "insights-page") setTimeout(renderCharts, 150);
   if (pageId === "reflect-page") loadReflections();
-  if (pageId === "admin-page") loadAdminPanel();
 };
 
 // ===== AUTH FUNCTIONS =====
@@ -402,7 +401,8 @@ window.adminSearch = function() {
 };
 
 // ===== ADMIN CHARTS =====
-function renderAdminCharts() {
+async function renderAdminCharts() {
+  if (!adminAllUsers.length) await loadAdminPanel();
   if (!adminAllUsers.length) return;
   // Signups per day (last 14 days)
   const labels = [], signupData = [], activeData = [];
@@ -716,12 +716,19 @@ window.addTask = async function(period) {
 
 window.toggleTask = async function(taskId, completed) {
   try {
-    await update(ref(db, `tasks/${currentUser.uid}/${taskId}`), { completed });
-    const li = document.querySelector(`[data-id="${taskId}"]`);
-    if (li) li.classList.toggle("done", completed);
+    if (!currentUser) return;
+    const taskRef = ref(db, `tasks/${currentUser.uid}/${taskId}`);
+    await update(taskRef, { completed });
+    const li = document.querySelector(`li[data-id="${taskId}"]`);
+    if (li) {
+      li.classList.toggle("done", completed);
+      const cb = li.querySelector('input[type="checkbox"]');
+      if (cb) cb.checked = completed;
+    }
     updateTaskStat();
   } catch (e) {
     console.error("Toggle task error:", e);
+    showToast("Error", "Could not update task.", "danger");
   }
 };
 
