@@ -58,6 +58,20 @@ onAuthStateChanged(auth, async (user) => {
     const profile = await loadUserProfile(user.uid);
     // treat as complete if onboardingComplete is true OR if they have a name (old profiles)
     if (!profile || (!profile.onboardingComplete && !profile.name)) {
+      // Ensure stub exists in DB so admin can see this user
+      if (!profile) {
+        try {
+          await set(ref(db, `users/${user.uid}`), {
+            email: user.email,
+            name: "",
+            domain: "",
+            role: "",
+            goals: [],
+            onboardingComplete: false,
+            createdAt: new Date().toISOString()
+          });
+        } catch(e) { console.error("Stub write error:", e); }
+      }
       showSection("onboarding-section");
     } else {
       userProfile = profile;
@@ -140,15 +154,20 @@ window.signupUser = async function() {
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     // Save stub profile immediately so admin can see all registered users
-    await set(ref(db, `users/${cred.user.uid}`), {
-      email,
-      name: "",
-      domain: "",
-      role: "",
-      goals: [],
-      onboardingComplete: false,
-      createdAt: new Date().toISOString()
-    });
+    try {
+      await set(ref(db, `users/${cred.user.uid}`), {
+        email,
+        name: "",
+        domain: "",
+        role: "",
+        goals: [],
+        onboardingComplete: false,
+        createdAt: new Date().toISOString()
+      });
+    } catch (dbErr) {
+      console.error("Stub profile write failed:", dbErr);
+      // Don't block signup — profile will be written after onboarding
+    }
   } catch (e) {
     errEl.textContent = friendlyAuthError(e.code);
   }
