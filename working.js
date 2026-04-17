@@ -1,6 +1,6 @@
 
 // ============================================================
-// PULSEFLOW - working.js  |  Uses Firebase Realtime Database
+// PULSE2FLOW - working.js  |  Uses Firebase Realtime Database
 // ============================================================
 
 // ===== FIREBASE IMPORTS (CDN) =====
@@ -381,7 +381,7 @@ function renderAdminNotifications(users, today) {
     // New signup in last 24h
     if (u.createdAt) {
       const diff = (Date.now() - new Date(u.createdAt).getTime()) / (1000 * 60 * 60);
-      if (diff <= 24) notes.push({ type: "success", msg: `🆕 ${escHtml(u.name || u.email)} just joined PulseFlow.` });
+      if (diff <= 24) notes.push({ type: "success", msg: `🆕 ${escHtml(u.name || u.email)} just joined PULSE2FLOW.` });
     }
   });
 
